@@ -1,0 +1,32 @@
+
+---
+- name: Set up containerized backups and cron jobs
+  hosts: localhost
+  become: yes
+
+  tasks:
+    - name: Pull backup container image
+      command: docker pull alpine:latest
+
+    - name: Create backup directory
+      file:
+        path: /var/backups
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Create a backup script
+      copy:
+        dest: /usr/local/bin/backup.sh
+        content: |
+          #!/bin/sh
+          docker run --rm -v /:/host -v /var/backups:/backups alpine tar czf /backups/backup_$(date +%Y%m%d).tar.gz /host
+        mode: '0755'
+
+    - name: Add cron job for daily backups
+      cron:
+        name: "Daily Docker backup"
+        minute: "0"
+        hour: "2"
+        job: "/usr/local/bin/backup.sh"

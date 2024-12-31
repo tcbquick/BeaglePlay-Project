@@ -1,0 +1,7 @@
+
+# Git Commands Log
+
+## Initialization
+- `git init`
+- `git add README.md`
+- `git commit -m "Initial commit with README.md"`

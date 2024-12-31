@@ -1,0 +1,47 @@
+
+---
+- name: Install Docker and configure local registry
+  hosts: localhost
+  become: yes
+
+  tasks:
+    - name: Update and install prerequisites
+      apt:
+        update_cache: yes
+        upgrade: yes
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+        state: present
+
+    - name: Add Docker's official GPG key
+      command: curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+    - name: Set up the stable repository for Docker
+      copy:
+        content: |
+          deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable
+        dest: /etc/apt/sources.list.d/docker.list
+
+    - name: Install Docker
+      apt:
+        update_cache: yes
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: present
+
+    - name: Create local Docker registry
+      command: docker run -d -p 5555:5000 --name registry --restart always registry:2
+      args:
+        creates: "/var/lib/docker/containers/registry"
+
+    - name: Add user 'ansible' to Docker group
+      user:
+        name: ansible
+        groups: docker
+        append: yes

@@ -1,0 +1,35 @@
+
+---
+- name: Deploy Nginx and monitor backup statuses
+  hosts: localhost
+  become: yes
+
+  tasks:
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: Start and enable Nginx service
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Create a status page for backups
+      copy:
+        dest: /var/www/html/backup_status.html
+        content: |
+          <html>
+          <head><title>Backup Status</title></head>
+          <body>
+          <h1>Backup Status</h1>
+          <p>Last backup completed successfully at: {{ ansible_date_time.iso8601 }}</p>
+          </body>
+          </html>
+        mode: '0644'
+
+    - name: Restart Nginx to load new status page
+      service:
+        name: nginx
+        state: restarted
